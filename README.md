@@ -2,9 +2,13 @@
 
 ## Hyperledger Fabric Avalon
 
+Steps to see fabric avalon in action
+
 ### Getting minifabric so that you can stand up a fabric network
 
 ```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
+
+[Minifabric](https://github.com/litong01/minifabric) is a tool to deploy fabric network on a single node
 
 ### Clone this repository
 
