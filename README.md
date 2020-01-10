@@ -4,7 +4,7 @@
 
 ### Getting minifabric so that you can stand up a fabric network
 
-curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab
+```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
 
 ### Clone this repository
 
@@ -19,21 +19,22 @@ a fabric network.
 
 ### Install avalon chaincode onto the fabric network
 ```
-sudo cp -r chaincode vars/chaincode
+sudo cp -r chaincode/* vars/chaincode/*
 minifab install -n <chaincodename> -v <chaincodeversion>
 minifab instantiate
 ```
 
-where &lt;chaincodename&gt; should be a name of avalone chaincode such as registry
-&lt;chaincodeversion&gt; should be the version of chaincode such as 1.0. If you
-have updated the chaincode already, you should use new version number.
+where &lt;chaincodename&gt; should be a name of avalon chaincodes such as
+registry, etc., &lt;chaincodeversion&gt; should be the version of chaincode
+such as 1.0. If you have updates to the chaincode, you should do the same
+steps above but use a new version number.
 
 ### Run avalon apps
 
-Two applications were developed to submit fabric transactions and listen to the events.
-The program named consumer.py in apps/src directory is the program to listen to
-fabric events. The program named  producer.py in apps/src was developed to submit
-transactions and query against fabric blockchain network.
+Two applications were developed to test the go chaincode and connector python
+code. The program named consumer.py in apps/src directory is the program to
+listen to fabric events. The program named producer.py in apps/src was developed
+to submit transactions and query against fabric blockchain network.
 
 #### To start the environment to run these programs:
 
@@ -53,8 +54,11 @@ python3 consumer.py 500
 ```
 docker exec -it avalon bash
 cd /pysrc
-python3 producer.py
+python3 producer.py <parameters>
 ```
+
+where &lt;parameters&gt; should be something depends on what you exactly
+want to do. Simply do `python3 producer.py` to see the usages
 
 ## License <a name="license"></a>
 
