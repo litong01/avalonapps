@@ -6,6 +6,24 @@ from hfc.fabric.client import Client
 
 logger = logging.getLogger(__name__)
 
+
+def get_net_info(netinfo, *key_path):
+    """
+    Get the info from network_info
+    :param key_path: path of the key, e.g., a.b.c means info['a']['b']['c']
+        :return: The value, or None
+    """
+    result = netinfo
+    if result:
+        for k in key_path:
+            try:
+                result = result[k]
+            except KeyError:
+                logger.warning(f'No key path {key_path} exists'
+                               f' in net info')
+                return None
+    return result
+
 async def get_stream_result(stream):
     res = []
     async for v in stream:

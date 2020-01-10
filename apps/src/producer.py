@@ -1,9 +1,12 @@
 #!/usr/bin/python
-import os
+import json
 import logging
-import time
+import os
+import random
 import sys
+import time
 
+from avalon import base
 from avalon import txcommiter
 
 logger = logging.getLogger(__name__)
@@ -18,8 +21,16 @@ def main():
         print("      or  " + sys.argv[0] + " query  <workerID>")
         exit(1)
 
-    pd = txcommiter.TxCommitter('network.json', 'mychannel', 'org1.example.com',
-        'peer0.org1.example.com', 'Admin')
+    config = None
+    with open('network.json', 'r') as profile:
+        config = json.load(profile)
+
+    orgname = base.get_net_info(config, 'client', 'organization')
+    peername = random.choice(base.get_net_info(config, 'organizations', orgname, 'peers'))
+    print(orgname)
+    print(peername)    
+
+    pd = txcommiter.TxCommitter('network.json', 'mychannel', orgname, peername, 'Admin')
     if sys.argv[1] == 'workerRegister':
         start = int(time.time())
         stop = int(sys.argv[2]) if len(sys.argv) == 3 else 1

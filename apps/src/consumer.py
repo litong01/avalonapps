@@ -1,9 +1,12 @@
 #!/usr/bin/python
 import asyncio
+import json
 import os
 import logging
 import sys
+import random
 
+from avalon import base
 from avalon import eventlistener
 
 logger = logging.getLogger(__name__)
@@ -21,8 +24,16 @@ def main():
         print("          " + sys.argv[0] + " <no_of_seconds_to_wait>")
         exit(1)
 
-    ec = eventlistener.EventListener('network.json', 'mychannel', 'org1.example.com',
-        'peer0.org1.example.com', 'Admin')
+    config = None
+    with open('network.json', 'r') as profile:
+        config = json.load(profile)
+
+    orgname = base.get_net_info(config, 'client', 'organization')
+    peername = random.choice(base.get_net_info(config, 'organizations', orgname, 'peers'))
+    print(orgname)
+    print(peername)    
+
+    ec = eventlistener.EventListener('network.json', 'mychannel', orgname, peername, 'Admin')
     ec.config = 'blockmark'
     ec.event = 'workerRegistered'
     ec.chaincode = 'registry'
