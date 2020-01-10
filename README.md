@@ -15,7 +15,10 @@
 ```cd avalon && minifab up -i 1.4.1```
 
 This process will take awhile if this is the first time you are setting up
-a fabric network.
+a fabric network. If for some reason, the network is no longer running, you
+can simply do the following command to bring things backup
+
+```minifab down && minifab up -i 1.4.1```
 
 ### Install avalon chaincode onto the fabric network
 ```
