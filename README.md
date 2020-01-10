@@ -36,7 +36,7 @@ code. The program named consumer.py in apps/src directory is the program to
 listen to fabric events. The program named producer.py in apps/src was developed
 to submit transactions and query against fabric blockchain network.
 
-#### To start the environment to run these programs:
+#### To start a container to run these programs:
 
 ```
 ./run.sh
@@ -49,7 +49,7 @@ cd /pysrc
 python3 consumer.py 500
 ```
 
-### To produce many network events and do query
+### To produce some events and do query
 
 ```
 docker exec -it avalon bash
