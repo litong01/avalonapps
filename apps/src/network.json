@@ -1,0 +1,144 @@
+{
+  "name": "avalon-network",
+  "description": "Generated network configuration file",
+  "version": "0.1",
+  "client": {
+    "organization": "Org1",
+    "credentialStore": {
+      "path": "/tmp/hfc-kvs",
+      "cryptoStore": {
+        "path": "/tmp/hfc-cvs"
+      },
+      "wallet": "wallet-name"
+    }
+  },
+  "organizations": {
+    "example.com": {
+      "mspid": "OrdererMSP",
+      "orderers": [
+        "orderer.example.com",
+        "orderer2.example.com",
+        "orderer3.example.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/signcerts/Admin@example.com-cert.pem",
+          "private_key": "/crypto-config/ordererOrganizations/example.com/users/Admin@example.com/msp/keystore/4c92de9d858bf9bf8c5696d5ade7a8f2e131c9eb95f5da03bcb235698ddf4a29_sk"
+        }
+      }
+    },
+    "org1.example.com": {
+      "mspid": "Org1MSP",
+      "peers": [
+        "peer0.org1.example.com",
+        "peer1.org1.example.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/signcerts/Admin@org1.example.com-cert.pem",
+          "private_key": "/crypto-config/peerOrganizations/org1.example.com/users/Admin@org1.example.com/msp/keystore/7ecd533311f62fd47a6e379d88ec68f47f6bda3b3f5cdcd81b1ba69d6b6aaec3_sk"
+        },
+        "User1": {
+          "cert": "/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem",
+          "private_key": "/crypto-config/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/c4db86b2b06ac4564d7664754ebf6024b02c5f113684dc6c6335be51191f73ec_sk"
+        }
+      }
+    },
+    "org2.example.com": {
+      "mspid": "Org2MSP",
+      "peers": [
+        "peer0.org2.example.com",
+        "peer1.org2.example.com"
+      ],
+      "users": {
+        "Admin": {
+          "cert": "/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/signcerts/Admin@org2.example.com-cert.pem",
+          "private_key": "/crypto-config/peerOrganizations/org2.example.com/users/Admin@org2.example.com/msp/keystore/02ff6b7c827ec4b6b1be4a9298707b105c7b892f0e555b1762017391f9a7cdc2_sk"
+        },
+        "User1": {
+          "cert": "/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/signcerts/User1@org2.example.com-cert.pem",
+          "private_key": "/crypto-config/peerOrganizations/org2.example.com/users/User1@org2.example.com/msp/keystore/415baf2f7e2fe286dd15642f573005803bc31371507edef53f0259909bd37198_sk"
+        }
+      }
+    }
+  },
+  "orderers": {
+    "orderer.example.com": {
+      "url": "orderer.example.com:7050",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "orderer.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+      }
+    },
+    "orderer2.example.com": {
+      "url": "orderer2.example.com:7050",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "orderer2.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+      }
+    },
+    "orderer3.example.com": {
+      "url": "orderer3.example.com:7050",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "orderer3.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem"
+      }
+    }
+  },
+  "peers": {
+    "peer0.org1.example.com": {
+      "url": "peer0.org1.example.com:7051",
+      "eventUrl": "peer0.org1.example.com:7053",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer0.org1.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem"
+      }
+    },
+    "peer1.org1.example.com": {
+      "url": "peer1.org1.example.com:7051",
+      "eventUrl": "peer1.org1.example.com:7053",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.org1.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/peerOrganizations/org1.example.com/tlsca/tlsca.org1.example.com-cert.pem"
+      }
+    },
+    "peer0.org2.example.com": {
+      "url": "peer0.org2.example.com:7051",
+      "eventUrl": "peer0.org2.example.com:7053",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer0.org2.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem"
+      }
+    },
+    "peer1.org2.example.com": {
+      "url": "peer1.org2.example.com:7051",
+      "eventUrl": "peer1.org2.example.com:7053",
+      "grpcOptions": {
+        "grpc.ssl_target_name_override": "peer1.org2.example.com",
+        "grpc-max-send-message-length": 15
+      },
+      "tlsCACerts": {
+        "path": "/crypto-config/peerOrganizations/org2.example.com/tlsca/tlsca.org2.example.com-cert.pem"
+      }
+    }
+  },
+  "certificateAuthorities": { }
+}

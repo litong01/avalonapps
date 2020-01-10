@@ -1,0 +1,5 @@
+# Ansible modules
+*.retry
+*.log
+__pycache__
+blockmark
