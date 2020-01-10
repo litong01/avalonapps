@@ -22,7 +22,7 @@ can simply do the following command to bring things backup
 
 ### Install avalon chaincode onto the fabric network
 ```
-sudo cp -r chaincode/* vars/chaincode/*
+sudo cp -r chaincode/* vars/chaincode
 minifab install -n <chaincodename> -v <chaincodeversion>
 minifab instantiate
 ```
