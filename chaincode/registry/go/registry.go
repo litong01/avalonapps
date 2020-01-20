@@ -19,7 +19,10 @@ package main
 //Off Chain Trusted Compute Service Work Registry Chaincode
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
@@ -39,8 +42,8 @@ const (
 	BYTE32FORMAT = "%032s"
 )
 
-// WorkerRegisterParam workerRegister invocation parameter
-type WorkerRegisterParam struct {
+// WorkerRegister workerRegister invocation parameter
+type WorkerRegister struct {
 	WorkerID          string   `json:"workerID"`
 	WorkerType        uint64   `json:"workerType"`
 	OrganizationID    string   `json:"organizationID"`
@@ -49,11 +52,13 @@ type WorkerRegisterParam struct {
 	Status            uint64   `json:"status,omitempty"`
 }
 
-// WorkerLookUpParam workerLookUp invocation parameter
-type WorkerLookUpParam struct {
-	WorkerType        uint64 `json:"workerType,omitempty"`
-	OrganizationID    string `json:"organizationID,omitempty"`
-	ApplicationTypeId string `json:"applicationTypeId,omitempty"`
+// WorkerRetrieveParam workerRetrieve response parameter
+type WorkerRetrieveResParam struct {
+	Status            uint64   `json:"status,omitempty"`
+	WorkerType        uint64   `json:"workerType"`
+	OrganizationID    string   `json:"organizationID"`
+	ApplicationTypeId []string `json:"applicationTypeId,omitempty"`
+	Details           string   `json:"details"`
 }
 
 type WorkerLookUpResParam struct {
@@ -65,6 +70,29 @@ type WorkerLookUpResParam struct {
 // WorkerRegistry Chaincode struct
 // This chaincode allows application to register, lookup and retrieve workers
 type WorkerRegistry struct {
+}
+
+// getWorkerByID - This function retrieve the worker register with its ID
+// params:
+//   byte32 workerID
+func (t *WorkerRegistry) getWorkerByID(stub shim.ChaincodeStubInterface, workerID string) (*WorkerRegister, error) {
+	var param WorkerRegister
+	Avalbytes, err := stub.GetState(workerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if Avalbytes == nil {
+		return nil, errors.New("Worker with ID '" + workerID + "' does not exist")
+	}
+
+	err = json.Unmarshal(Avalbytes, &param)
+	if err != nil {
+		logger.Errorf("Error trying to decode the worker: %s", err)
+		return nil, err
+	}
+
+	return &param, nil
 }
 
 // Init the init function of the chaincode
@@ -83,23 +111,26 @@ func (t *WorkerRegistry) Init(stub shim.ChaincodeStubInterface) pb.Response {
 // returns:
 func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	logger.Info("workerRegister")
-	if args != nil {
-		logger.Info(args)
+	if len(args) != 5 {
+		logger.Errorf("Too many parameters, expect 5, received %d", len(args))
+		return shim.Error("workerRegister must include 5 arguments, workerID, workerType, organizationID, applicationTypeId, and details")
 	}
 
-	var param WorkerRegisterParam
-	value := []byte(args[0])
-	err := json.Unmarshal(value, &param)
+	var param WorkerRegister
+	param.WorkerID = args[0]
+	arg1, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
-		logger.Errorf("Error trying to decode passed in parameters: %s", err)
-		return shim.Error(err.Error())
+		logger.Errorf("Worker Type must be an integer")
+		return shim.Error("Worker Type must be an integer")
 	}
-
-	// Set default status to be active
+	param.WorkerType = arg1
+	param.OrganizationID = args[2]
+	param.ApplicationTypeId = strings.Split(args[3], ",")
+	param.Details = args[4]
 	param.Status = WORKERACTIVE
 
 	//Serialize the value
-	value, err = json.Marshal(param)
+	value, err := json.Marshal(param)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -148,6 +179,80 @@ func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args [
 	return shim.Success(nil)
 }
 
+// WorkerSetStatus - This function set the status of a Worker
+// params:
+//   byte32 workerID
+//   uint256 status
+// returns:
+func (t *WorkerRegistry) workerUpdate(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("workerSetStatus")
+	logger.Infof("query workerID: %s", args[0])
+
+	if len(args) != 2 {
+		logger.Errorf("Expected parameters are 2, received %d", len(args))
+		return shim.Error("workerUpdate must include 2 arguments, workerID and details")
+	}
+
+	wr, err := t.getWorkerByID(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	wr.Details = args[1]
+	//Serialize the value
+	value, err := json.Marshal(wr)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = stub.PutState(wr.WorkerID, value)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(value)
+}
+
+// WorkerSetStatus - This function set the status of a Worker
+// params:
+//   byte32 workerID
+//   uint256 status
+// returns:
+func (t *WorkerRegistry) workerSetStatus(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("workerSetStatus")
+	logger.Infof("query workerID: %s", args[0])
+
+	if len(args) != 2 {
+		logger.Errorf("Expected parameters are 2, received %d", len(args))
+		return shim.Error("workerSetStatus must include 2 arguments, workID and status")
+	}
+
+	arg1, err := strconv.ParseUint(args[1], 10, 64)
+	if err != nil {
+		logger.Errorf("Worker status must be integer, received %v", args[1])
+		return shim.Error(err.Error())
+	}
+
+	wr, err := t.getWorkerByID(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	wr.Status = arg1
+	//Serialize the value
+	value, err := json.Marshal(wr)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = stub.PutState(wr.WorkerID, value)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(value)
+}
+
 // WorkerLookUp - This function retrieves a list of Worker ids that match input
 // parameter. The Worker must match to all input parameters (AND mode) to be
 // included in the list.
@@ -161,58 +266,14 @@ func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args [
 //   bytes32[] ids
 func (t *WorkerRegistry) workerLookUp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	logger.Info("workerLookUp")
-	if args != nil {
-		logger.Info(args)
+
+	if len(args) != 3 {
+		logger.Errorf("Expected parameters are 3, received %d", len(args))
+		return shim.Error("workerLookUp must include 3 arguments, workType, organizationID and applicationTypeId")
 	}
 
-	var param WorkerLookUpParam
-	value := []byte(args[0])
-	err := json.Unmarshal(value, &param)
-	if err != nil {
-		logger.Errorf("Error trying to decode passed in parameters: %s", err)
-		return shim.Error(err.Error())
-	}
-
-	attrs := []string{}
-	if param.WorkerType != 0 {
-		attrs = append(attrs, fmt.Sprintf(UINT64FORMAT, param.WorkerType))
-		if param.OrganizationID != "0" {
-			attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, param.OrganizationID))
-			if param.ApplicationTypeId != "0" {
-				attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, param.ApplicationTypeId))
-			}
-		}
-	}
-	logger.Infof("The search starting key: %v", attrs)
-
-	iter, metadata, err := stub.GetStateByPartialCompositeKeyWithPagination(OBJECTTYPE, attrs,
-		int32(PAGESIZE+1), "")
-	if err != nil {
-		logger.Errorf("Error trying to query with partial composite key: %s", err)
-		return shim.Error(err.Error())
-	}
-
-	var resparam WorkerLookUpResParam
-	for iter.HasNext() {
-		item, _ := iter.Next()
-		logger.Infof("The value: %v", item)
-		resparam.IDs = append(resparam.IDs, string(item.Value))
-		if len(resparam.IDs) > PAGESIZE {
-			resparam.TotalCount = PAGESIZE + 1
-			break
-		} else {
-			resparam.TotalCount += 1
-		}
-	}
-	logger.Info("Result metadata: %v", metadata)
-
-	//Serialize the response
-	value, err = json.Marshal(resparam)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	return shim.Success(value)
+	args = append(args, "")
+	return t.workerLookUpNext(stub, args)
 }
 
 // WorkerLookUpNext - This function is called to retrieve additional results of the
@@ -229,7 +290,55 @@ func (t *WorkerRegistry) workerLookUp(stub shim.ChaincodeStubInterface, args []s
 func (t *WorkerRegistry) workerLookUpNext(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	logger.Info("workerLookUpNext")
 
-	return shim.Success(nil)
+	if len(args) != 4 {
+		logger.Errorf("Expected parameters are 4, received %d", len(args))
+		return shim.Error("workerLookUpNext must include 4 argements, workerType, organizationID, applicationTypeId and lookupTag")
+	}
+
+	attrs := []string{}
+	arg0, err := strconv.ParseUint(args[0], 10, 64)
+	if err != nil {
+		logger.Errorf("Worker Type must be an integer")
+		return shim.Error("Worker Type must be an integer")
+	}
+	if arg0 != 0 {
+		attrs = append(attrs, fmt.Sprintf(UINT64FORMAT, arg0))
+		if args[1] != "0" {
+			attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, args[1]))
+			if args[2] != "0" {
+				attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, args[2]))
+			}
+		}
+	}
+	logger.Infof("The lookup key: %v", attrs)
+
+	iter, metadata, err := stub.GetStateByPartialCompositeKeyWithPagination(OBJECTTYPE, attrs,
+		int32(PAGESIZE+1), args[3])
+	if err != nil {
+		logger.Errorf("Error trying to query with partial composite key: %s", err)
+		return shim.Error(err.Error())
+	}
+
+	var resparam WorkerLookUpResParam
+	for iter.HasNext() {
+		item, _ := iter.Next()
+		logger.Infof("The value: %v", item)
+		resparam.IDs = append(resparam.IDs, string(item.Value))
+		if len(resparam.IDs) == PAGESIZE {
+			break
+		}
+	}
+	logger.Info("Result metadata: %v", metadata)
+	resparam.LookupTag = metadata.GetBookmark()
+	resparam.TotalCount = uint64(metadata.GetFetchedRecordsCount())
+
+	//Serialize the response
+	value, err := json.Marshal(resparam)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(value)
 }
 
 // WorkerRetrieve - This function retrieves information for the Worker and it can be
@@ -237,14 +346,39 @@ func (t *WorkerRegistry) workerLookUpNext(stub shim.ChaincodeStubInterface, args
 // params:
 //   byte32 workerId
 // returns:
+//   uint256 status
 //   uint8 workerType
-//   string workerTypeDataUri
 //   bytes32 organizationId
 //   bytes32[] applicationTypeId
+//   string details
 func (t *WorkerRegistry) workerRetrieve(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	logger.Info("workerRetrieve")
+	if len(args) != 1 {
+		logger.Errorf("Expected parameter is 1, received %d", len(args))
+		return shim.Error("workerRetrieve must include 1 argument, workerID")
+	}
 
-	return shim.Success(nil)
+	logger.Infof("worker retrieve workerID: %s", args[0])
+
+	wr, err := t.getWorkerByID(stub, args[0])
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	var resparam WorkerRetrieveResParam
+	resparam.Status = wr.Status
+	resparam.WorkerType = wr.WorkerType
+	resparam.OrganizationID = wr.OrganizationID
+	resparam.ApplicationTypeId = wr.ApplicationTypeId
+	resparam.Details = wr.Details
+
+	//Serialize the response
+	value, err := json.Marshal(resparam)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(value)
 }
 
 // query - This function retrieves information by worker id
@@ -259,7 +393,7 @@ func (t *WorkerRegistry) query(stub shim.ChaincodeStubInterface, args []string) 
 	logger.Info("query")
 
 	// Get the state from the ledger
-	logger.Infof("query workID: %s", args[0])
+	logger.Infof("query workerID: %s", args[0])
 	Avalbytes, err := stub.GetState(args[0])
 	if err != nil {
 		return shim.Error(err.Error())
@@ -278,6 +412,10 @@ func (t *WorkerRegistry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	function, args := stub.GetFunctionAndParameters()
 	if function == "workerRegister" {
 		return t.workerRegister(stub, args)
+	} else if function == "workerUpdate" {
+		return t.workerUpdate(stub, args)
+	} else if function == "workerSetStatus" {
+		return t.workerSetStatus(stub, args)
 	} else if function == "workerLookUp" {
 		return t.workerLookUp(stub, args)
 	} else if function == "workerLookUpNext" {

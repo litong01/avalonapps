@@ -37,14 +37,21 @@ def main():
         for i in range(start, start+stop):
             workerID = 'ID' + str(i)
             print(workerID)
-            txData = {'workerID': workerID, 'workerType': 1, 'organizationID': 'org1',
-                 'applicationTypeId': ['a1','a2','a3'], 'details': 'whatever here'}
-            pd.ccInvoke(txData, 'registry', sys.argv[1],'1.0')
+            txData = [workerID, '1', 'org1', 'a1,a2,a3', 'whatever here']
+            resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '')
+            print(resp)
     elif sys.argv[1] == 'workerLookUp':
-        txData = {'workerType': 1, 'organizationID': '0', 'applicationTypeId': '0'}
-        resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '1.0', queryonly=True)
+        txData = ['1', '0', '0']
+        resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '', queryonly=True)
         print(resp)
-
+    elif sys.argv[1] == 'workerLookUpNext':
+        txData = ['1', '0', '0', sys.argv[2]]
+        resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '', queryonly=True)
+        print(resp)
+    elif sys.argv[1] == 'workerRetrieve':
+        txData = [sys.argv[2]]
+        resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '', queryonly=True)
+        print(resp)
     elif sys.argv[1] == 'query':
         workerID = sys.argv[2] if len(sys.argv) == 3 else 'ID001'
         pd.ccQuery([workerID], 'registry')

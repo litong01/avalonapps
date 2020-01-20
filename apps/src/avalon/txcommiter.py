@@ -35,14 +35,11 @@ class TxCommitter(base.ClientBase):
     # queryonly - if the invocation does not result in ledger change, queryonly should be
     #             set to True, if the invocation does result in ledger change, it should
     #             be set to False.
-    def ccInvoke(self, txData, cc_name, fcn, cc_version, queryonly=False):
+    def ccInvoke(self, args, cc_name, fcn, cc_version, queryonly=False):
         loop = asyncio.get_event_loop()
         crypto = ecies()
 
-        args = [json.dumps(txData, separators=(',',':'))]
-
         endorses = self.getEndorsers(queryonly)
-        print(endorses)
 
         tran_prop_req = create_tx_prop_req(prop_type=CC_INVOKE,
             cc_type=CC_TYPE_GOLANG, cc_name=cc_name, fcn=fcn,
@@ -56,10 +53,7 @@ class TxCommitter(base.ClientBase):
         res = loop.run_until_complete(asyncio.gather(*responses))
 
         if queryonly:
-            if hasattr(res[0].response, 'payload'):
-                return res[0].response.payload
-            else:
-                return {}
+            return res
 
         tran_req = build_tx_req((res, proposal, header))
 
@@ -72,7 +66,7 @@ class TxCommitter(base.ClientBase):
 
         logger.info('Tx response: {0}'.format(responses))
 
-        return {}
+        return responses
 
     # Invoke a chaincode query method. If there is no query method from the
     # chaincode, then this will fail
@@ -85,5 +79,7 @@ class TxCommitter(base.ClientBase):
                 requestor=self.user, channel_name=self.channel_name,
                 peers=[self.peer_name], args=args, cc_name=cc_name))
             logger.info('Tx response: {0}'.format(responses))
+            return responses
         except Exception as ex:
             logger.error('Query error: {0}'.format(ex))
+            return {}
