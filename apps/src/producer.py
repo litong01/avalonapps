@@ -62,6 +62,10 @@ def main():
     elif sys.argv[1] == 'query':
         workerID = sys.argv[2] if len(sys.argv) == 3 else 'ID001'
         pd.ccQuery([workerID], 'registry')
+    elif sys.argv[1] == 'workOrderSubmit':
+        txData = ['100', 'worderId', 'myrequesterid', 'whatever is here']
+        resp = pd.ccInvoke(txData, 'order', sys.argv[1], '')
+        print(resp)
 
 if __name__ == "__main__":
     main()

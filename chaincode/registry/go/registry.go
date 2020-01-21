@@ -161,9 +161,7 @@ func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args [
 		}
 	}
 
-	// Handling payload for the event, since payload is omited by
-	// fabric python sdk, workID is simply put in the event, this
-	// need to be revisted once python sdk support payload
+	// Handling payload for the event
 	eventData := map[string]interface{}{"workerID": param.WorkerID}
 	eventPayload, err := json.Marshal(eventData)
 	if err != nil {
@@ -432,6 +430,6 @@ func (t *WorkerRegistry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 func main() {
 	err := shim.Start(new(WorkerRegistry))
 	if err != nil {
-		logger.Errorf("Error starting Simple chaincode: %s", err)
+		logger.Errorf("Error starting WorkerRegistry chaincode: %s", err)
 	}
 }
