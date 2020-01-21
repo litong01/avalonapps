@@ -43,7 +43,14 @@ def main():
     elif sys.argv[1] == 'workerLookUp':
         txData = ['1', '0', '0']
         resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '', queryonly=True)
-        print(resp)
+        # The following code demostrate how to use the lookupTag to do the lookups
+        mypayload = json.loads(resp[0].response.payload)
+        print(mypayload['lookupTag'])
+        print(mypayload['ids'])
+        txData = ['1', '0', '0', mypayload['lookupTag'] ]
+        resp = pd.ccInvoke(txData, 'registry', 'workerLookUpNext', '', queryonly=True)
+        mypayload = json.loads(resp[0].response.payload)
+        print(mypayload['ids'])
     elif sys.argv[1] == 'workerLookUpNext':
         txData = ['1', '0', '0', sys.argv[2]]
         resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '', queryonly=True)
@@ -51,7 +58,7 @@ def main():
     elif sys.argv[1] == 'workerRetrieve':
         txData = [sys.argv[2]]
         resp = pd.ccInvoke(txData, 'registry', sys.argv[1], '', queryonly=True)
-        print(resp)
+        print(json.loads(resp[0].response.payload))
     elif sys.argv[1] == 'query':
         workerID = sys.argv[2] if len(sys.argv) == 3 else 'ID001'
         pd.ccQuery([workerID], 'registry')
