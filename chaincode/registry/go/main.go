@@ -20,7 +20,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -28,20 +27,20 @@ import (
 	pb "github.com/hyperledger/fabric/protos/peer"
 )
 
-var logger = shim.NewLogger("WorkerRegistry")
+var logger = shim.NewLogger("Registry")
 
 // getWorkerByID - This function retrieve the worker register with its ID
 // params:
 //   byte32 workerID
-func (t *WorkerRegistry) getWorkerByID(stub shim.ChaincodeStubInterface, workerID string) (*WorkerRegistry, error) {
-	var param WorkerRegistry
-	Avalbytes, err := stub.GetState(workerID)
+func (t *Registry) getRegistryByID(stub shim.ChaincodeStubInterface, registryID string) (*Registry, error) {
+	var param Registry
+	Avalbytes, err := stub.GetState(registryID)
 	if err != nil {
 		return nil, err
 	}
 
 	if Avalbytes == nil {
-		return nil, errors.New("Worker with ID '" + workerID + "' does not exist")
+		return nil, errors.New("Worker with ID '" + registryID + "' does not exist")
 	}
 
 	err = json.Unmarshal(Avalbytes, &param)
@@ -54,154 +53,160 @@ func (t *WorkerRegistry) getWorkerByID(stub shim.ChaincodeStubInterface, workerI
 }
 
 // Init the init function of the chaincode
-func (t *WorkerRegistry) Init(stub shim.ChaincodeStubInterface) pb.Response {
-	logger.Info("WorkerRegistry Init")
+func (t *Registry) Init(stub shim.ChaincodeStubInterface) pb.Response {
+	logger.Info("Registry Init")
 	return shim.Success(nil)
 }
 
-// workerRegister - This function registers a Worker
+// registryAdd - This function add a new organization
 // params:
-//   byte32 workerID
-//   uint256 workerType
-//   bytes32 organizationID
-//   bytes32[] applicationTypeId
-//   string details
+//   byte32 orgID
+//   stromg uri
+//   bytes32 scAddr
+//   bytes32[] appTypeIds
 // returns:
-func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	logger.Info("workerRegister")
-	if len(args) != 5 {
-		logger.Errorf("Too many parameters, expect 5, received %d", len(args))
-		return shim.Error("workerRegister must include 5 arguments, workerID, workerType, organizationID, applicationTypeId, and details")
+func (t *Registry) registryAdd(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("registryAdd")
+	if len(args) != 4 {
+		logger.Errorf("Mismatch number of arguments, expect 4, received %d", len(args))
+		return shim.Error("registryAdd must include 4 arguments, orgID, uri, scAddr and appTypeIds")
 	}
 
-	var param WorkerRegistry
-	param.WorkerID = args[0]
-	arg1, err := strconv.ParseUint(args[1], 10, 64)
-	if err != nil {
-		logger.Errorf("Worker Type must be an integer")
-		return shim.Error("Worker Type must be an integer")
-	}
-	param.WorkerType = arg1
-	param.OrganizationID = args[2]
-	param.ApplicationTypeId = strings.Split(args[3], ",")
-	param.Details = args[4]
-	param.Status = WORKERACTIVE
+	var r Registry
+	r.OrgID = args[0]
+	r.URI = args[1]
+	r.SCAddr = args[2]
+	r.AppTypeIds = strings.Split(args[3], ",")
+	r.Status = ACTIVE
 
 	//Serialize the value
-	value, err := json.Marshal(param)
+	value, err := json.Marshal(r)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	logger.Infof("The worker ID: %s", param.WorkerID)
-	err = stub.PutState(param.WorkerID, value)
+	logger.Infof("The registry ID: %s", r.OrgID)
+	err = stub.PutState(r.OrgID, value)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	// Need to add compositeKey so that the search would work
-	// The composite key is made of OBJECTTYPE, workerType, organizationID and appTypeID
-	compValue := []byte(param.WorkerID)
-	for _, appTypeID := range param.ApplicationTypeId {
-		key1 := fmt.Sprintf(UINT64FORMAT, param.WorkerType)
-		key2 := fmt.Sprintf(BYTE32FORMAT, param.OrganizationID)
-		key3 := fmt.Sprintf(BYTE32FORMAT, appTypeID)
-		key4 := fmt.Sprintf(BYTE32FORMAT, param.WorkerID)
-		compKey, err := stub.CreateCompositeKey(OBJECTTYPE,
-			[]string{key1, key2, key3, key4})
+	compValue := []byte(r.OrgID)
+	for _, appTypeID := range r.AppTypeIds {
+		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, []string{appTypeID, r.OrgID})
 		if err != nil {
 			return shim.Error(err.Error())
 		}
-		logger.Infof("The composite key: %s, length: %d", compKey, len(compKey))
 		err = stub.PutState(compKey, compValue)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
 	}
 
-	// Handling payload for the event
-	eventData := map[string]interface{}{"workerID": param.WorkerID}
-	eventPayload, err := json.Marshal(eventData)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	err = stub.SetEvent("workerRegistered", eventPayload)
-	if err != nil {
-		return shim.Error(err.Error())
-	}
-
-	logger.Info("Finished workerRegister")
+	logger.Info("Finished registerAdd")
 	return shim.Success(nil)
 }
 
-// WorkerSetStatus - This function set the status of a Worker
+// registryUpdate - This function updates a Registry
 // params:
-//   byte32 workerID
-//   uint256 status
+//   byte32 orgID
+//   stromg uri
+//   bytes32 scAddr
+//   bytes32[] appTypeIds
 // returns:
-func (t *WorkerRegistry) workerUpdate(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	logger.Info("workerSetStatus")
-	logger.Infof("query workerID: %s", args[0])
+func (t *Registry) registryUpdate(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("registryUpdate")
 
-	if len(args) != 2 {
-		logger.Errorf("Expected parameters are 2, received %d", len(args))
-		return shim.Error("workerUpdate must include 2 arguments, workerID and details")
+	if len(args) != 4 {
+		logger.Errorf("Mismatch number of arguments, expect 4, received %d", len(args))
+		return shim.Error("registryUpdate must include 4 arguments, orgID, uri, scAddr and appTypeIds")
 	}
 
-	wr, err := t.getWorkerByID(stub, args[0])
+	r, err := t.getRegistryByID(stub, args[0])
 	if err != nil {
+		logger.Errorf("Can not find the registry with ID: %s", args[0])
 		return shim.Error(err.Error())
 	}
 
-	wr.Details = args[1]
+	var oldAppTypeIds []string
+	oldAppTypeIds = append(r.AppTypeIds)
+	r.URI = args[1]
+	r.SCAddr = args[2]
+	r.AppTypeIds = strings.Split(args[3], ",")
+
 	//Serialize the value
-	value, err := json.Marshal(wr)
+	value, err := json.Marshal(r)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	err = stub.PutState(wr.WorkerID, value)
+	logger.Infof("The registry ID: %s", r.OrgID)
+	err = stub.PutState(r.OrgID, value)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	return shim.Success(value)
+	// Remove all the app IDs
+	for _, appTypeID := range oldAppTypeIds {
+		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, []string{appTypeID, r.OrgID})
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		err = stub.DelState(compKey)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	}
+
+	compValue := []byte(r.OrgID)
+	for _, appTypeID := range r.AppTypeIds {
+		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, []string{appTypeID, r.OrgID})
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		err = stub.PutState(compKey, compValue)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+	}
+
+	logger.Info("Finished registerUpdate")
+	return shim.Success(nil)
 }
 
-// WorkerSetStatus - This function set the status of a Worker
+// registrySetStatus - This function set the status of a registry
 // params:
-//   byte32 workerID
+//   byte32 orgID
 //   uint256 status
 // returns:
-func (t *WorkerRegistry) workerSetStatus(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	logger.Info("workerSetStatus")
-	logger.Infof("query workerID: %s", args[0])
+func (t *Registry) registrySetStatus(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("registrySetStatus")
 
 	if len(args) != 2 {
 		logger.Errorf("Expected parameters are 2, received %d", len(args))
-		return shim.Error("workerSetStatus must include 2 arguments, workID and status")
+		return shim.Error("registrySetStatus must include 2 arguments, orgID and status")
 	}
 
 	arg1, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
-		logger.Errorf("Worker status must be integer, received %v", args[1])
+		logger.Errorf("Registry status must be integer, received %v", args[1])
 		return shim.Error(err.Error())
 	}
 
-	wr, err := t.getWorkerByID(stub, args[0])
+	r, err := t.getRegistryByID(stub, args[0])
 	if err != nil {
+		logger.Errorf("Can not find the registry with ID: %s", args[0])
 		return shim.Error(err.Error())
 	}
 
-	wr.Status = arg1
+	r.Status = arg1
 	//Serialize the value
-	value, err := json.Marshal(wr)
+	value, err := json.Marshal(r)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	err = stub.PutState(wr.WorkerID, value)
+	err = stub.PutState(r.OrgID, value)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
@@ -209,73 +214,55 @@ func (t *WorkerRegistry) workerSetStatus(stub shim.ChaincodeStubInterface, args 
 	return shim.Success(value)
 }
 
-// WorkerLookUp - This function retrieves a list of Worker ids that match input
-// parameter. The Worker must match to all input parameters (AND mode) to be
+// registryLookUp - This function retrieves a list of registry ids that match input
+// parameter. The registry must match to all input parameters (AND mode) to be
 // included in the list.
 // params:
-//   uint8 workerType
-//   bytes32 organizationId
-//   bytes32 applicationTypeId
+//   bytes32 appTypeId
 // returns:
 //   int totalCount
 //   string LookupTag
 //   bytes32[] ids
-func (t *WorkerRegistry) workerLookUp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	logger.Info("workerLookUp")
+func (t *Registry) registryLookUp(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("registryLookUp")
 
-	if len(args) != 3 {
-		logger.Errorf("Expected parameters are 3, received %d", len(args))
-		return shim.Error("workerLookUp must include 3 arguments, workType, organizationID and applicationTypeId")
+	if len(args) != 1 {
+		logger.Errorf("Expected 1 argument, received %d", len(args))
+		return shim.Error("registryLookUp must include 1 argument, appTypeId")
 	}
 
 	args = append(args, "")
-	return t.workerLookUpNext(stub, args)
+	return t.registryLookUpNext(stub, args)
 }
 
-// WorkerLookUpNext - This function is called to retrieve additional results of the
-// Worker lookup initiated byworkerLookUp call.
+// registryLookUpNext - This function is called to retrieve additional results of the
+// registry lookup initiated by registryLookUp call.
 // params:
-//   uint8 workerType
-//   bytes32 organizationId
-//   bytes32 applicationTypeId
+//   bytes32 appTypeId
 //   string lookUpTag
 // returns:
 //   int totalCount
 //   string newLookupTag
 //   bytes32[] ids
-func (t *WorkerRegistry) workerLookUpNext(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	logger.Info("workerLookUpNext")
+func (t *Registry) registryLookUpNext(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("registryLookUpNext")
 
-	if len(args) != 4 {
-		logger.Errorf("Expected parameters are 4, received %d", len(args))
-		return shim.Error("workerLookUpNext must include 4 argements, workerType, organizationID, applicationTypeId and lookupTag")
+	if len(args) != 2 {
+		logger.Errorf("Expected arguments are 2, received %d", len(args))
+		return shim.Error("registryLookUpNext must include 2 argements, appTypeId and lookUpTag")
 	}
 
-	attrs := []string{}
-	arg0, err := strconv.ParseUint(args[0], 10, 64)
-	if err != nil {
-		logger.Errorf("Worker Type must be an integer")
-		return shim.Error("Worker Type must be an integer")
-	}
-	if arg0 != 0 {
-		attrs = append(attrs, fmt.Sprintf(UINT64FORMAT, arg0))
-		if args[1] != "0" {
-			attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, args[1]))
-			if args[2] != "0" {
-				attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, args[2]))
-			}
-		}
-	}
+	attrs := []string{args[0]}
 	logger.Infof("The lookup key: %v", attrs)
 
 	iter, metadata, err := stub.GetStateByPartialCompositeKeyWithPagination(OBJECTTYPE, attrs,
-		int32(PAGESIZE+1), args[3])
+		int32(PAGESIZE+1), args[1])
 	if err != nil {
 		logger.Errorf("Error trying to query with partial composite key: %s", err)
 		return shim.Error(err.Error())
 	}
 
-	var resparam WorkerLookUpResParam
+	var resparam RegistryLookUpRes
 	for iter.HasNext() {
 		item, _ := iter.Next()
 		logger.Infof("The value: %v", item)
@@ -297,36 +284,34 @@ func (t *WorkerRegistry) workerLookUpNext(stub shim.ChaincodeStubInterface, args
 	return shim.Success(value)
 }
 
-// WorkerRetrieve - This function retrieves information for the Worker and it can be
+// registryRetrieve - This function retrieves information for the Worker and it can be
 // called from any authorized publickey (Ethereum address) or DID
 // params:
-//   byte32 workerId
+//   byte32 orgId
 // returns:
-//   uint256 status
-//   uint8 workerType
-//   bytes32 organizationId
-//   bytes32[] applicationTypeId
-//   string details
-func (t *WorkerRegistry) workerRetrieve(stub shim.ChaincodeStubInterface, args []string) pb.Response {
-	logger.Info("workerRetrieve")
+//   string uri
+//   bytes32 scAddr
+//   bytes32[] appTypeIds
+//   uint6=256 status
+func (t *Registry) registryRetrieve(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("registryRetrieve")
 	if len(args) != 1 {
 		logger.Errorf("Expected parameter is 1, received %d", len(args))
-		return shim.Error("workerRetrieve must include 1 argument, workerID")
+		return shim.Error("registryRetrieve must include 1 argument, orgId")
 	}
 
-	logger.Infof("worker retrieve workerID: %s", args[0])
+	logger.Infof("registry retrieve orgId: %s", args[0])
 
-	wr, err := t.getWorkerByID(stub, args[0])
+	r, err := t.getRegistryByID(stub, args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
-	var resparam WorkerRetrieveResParam
-	resparam.Status = wr.Status
-	resparam.WorkerType = wr.WorkerType
-	resparam.OrganizationID = wr.OrganizationID
-	resparam.ApplicationTypeId = wr.ApplicationTypeId
-	resparam.Details = wr.Details
+	var resparam RegistryRetrieveRes
+	resparam.Status = r.Status
+	resparam.URI = r.URI
+	resparam.SCAddr = r.SCAddr
+	resparam.AppTypeIds = r.AppTypeIds
 
 	//Serialize the response
 	value, err := json.Marshal(resparam)
@@ -337,47 +322,43 @@ func (t *WorkerRegistry) workerRetrieve(stub shim.ChaincodeStubInterface, args [
 	return shim.Success(value)
 }
 
-// query - This function retrieves information by worker id
+// query - This function retrieves information by org id
 // params:
-//   byte32 workerId
+//   byte32 orgId
 // returns:
-//   uint8 workerType
-//   string workerTypeDataUri
-//   bytes32 organizationId
-//   bytes32[] applicationTypeId
-func (t *WorkerRegistry) query(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+func (t *Registry) query(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	logger.Info("query")
 
 	// Get the state from the ledger
-	logger.Infof("query workerID: %s", args[0])
+	logger.Infof("query by orgID: %s", args[0])
 	Avalbytes, err := stub.GetState(args[0])
 	if err != nil {
 		return shim.Error(err.Error())
 	}
 
 	if Avalbytes == nil {
-		return shim.Error("WorkerID '" + args[0] + "' does not exist")
+		return shim.Error("orgID '" + args[0] + "' does not exist")
 	}
 
 	return shim.Success(Avalbytes)
 }
 
 // Invoke - this function simply satisfy the main requirement of chaincode
-func (t *WorkerRegistry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
+func (t *Registry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	logger.Info("Invoke")
 	function, args := stub.GetFunctionAndParameters()
-	if function == "workerRegister" {
-		return t.workerRegister(stub, args)
-	} else if function == "workerUpdate" {
-		return t.workerUpdate(stub, args)
-	} else if function == "workerSetStatus" {
-		return t.workerSetStatus(stub, args)
-	} else if function == "workerLookUp" {
-		return t.workerLookUp(stub, args)
-	} else if function == "workerLookUpNext" {
-		return t.workerLookUpNext(stub, args)
-	} else if function == "workerRetrieve" {
-		return t.workerRetrieve(stub, args)
+	if function == "registryAdd" {
+		return t.registryAdd(stub, args)
+	} else if function == "registryUpdate" {
+		return t.registryUpdate(stub, args)
+	} else if function == "registrySetStatus" {
+		return t.registrySetStatus(stub, args)
+	} else if function == "registryLookUp" {
+		return t.registryLookUp(stub, args)
+	} else if function == "registryLookUpNext" {
+		return t.registryLookUpNext(stub, args)
+	} else if function == "registryRetrieve" {
+		return t.registryRetrieve(stub, args)
 	} else if function == "query" {
 		return t.query(stub, args)
 	}
@@ -386,8 +367,8 @@ func (t *WorkerRegistry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 }
 
 func main() {
-	err := shim.Start(new(WorkerRegistry))
+	err := shim.Start(new(Registry))
 	if err != nil {
-		logger.Errorf("Error starting WorkerRegistry chaincode: %s", err)
+		logger.Errorf("Error starting Registry chaincode: %s", err)
 	}
 }

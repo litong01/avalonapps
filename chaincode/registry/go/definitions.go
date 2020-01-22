@@ -16,39 +16,36 @@ limitations under the License.
 
 package main
 
+// Constant values for registry
 const (
-	WORKERACTIVE         = 1
-	WORKEROFFLINE        = 2
-	WORKERDECOMMISSIONED = 3
-	WORKERCOMPROMISED    = 4
+	ACTIVE         = 1
+	OFFLINE        = 2
+	DECOMMISSIONED = 3
 
-	OBJECTTYPE   = "WorkerRegister"
-	PAGESIZE     = 10
-	UINT64FORMAT = "%020d"
-	BYTE32FORMAT = "%032s"
+	OBJECTTYPE = "Registry"
+	PAGESIZE   = 10
 )
 
-// WorkerRegister workerRegister invocation parameter
-type WorkerRegistry struct {
-	WorkerID          string   `json:"workerID"`
-	WorkerType        uint64   `json:"workerType"`
-	OrganizationID    string   `json:"organizationID"`
-	ApplicationTypeId []string `json:"applicationTypeId,omitempty"`
-	Details           string   `json:"details"`
-	Status            uint64   `json:"status,omitempty"`
+// Registry data structure
+type Registry struct {
+	OrgID      string   `json:"orgID"`
+	URI        string   `json:"uri"`
+	SCAddr     string   `json:"scAddr"`
+	AppTypeIds []string `json:"appTypeIds,omitempty"`
+	Status     uint64   `json:"status"`
 }
 
-// WorkerRetrieveParam workerRetrieve response parameter
-type WorkerRetrieveResParam struct {
-	Status            uint64   `json:"status,omitempty"`
-	WorkerType        uint64   `json:"workerType"`
-	OrganizationID    string   `json:"organizationID"`
-	ApplicationTypeId []string `json:"applicationTypeId,omitempty"`
-	Details           string   `json:"details"`
-}
-
-type WorkerLookUpResParam struct {
+// RegistryLookUpRes registry lookup response data structure
+type RegistryLookUpRes struct {
 	TotalCount uint64   `json:"totalCount"`
 	LookupTag  string   `json:"lookupTag"`
 	IDs        []string `json:"ids,omitempty"`
+}
+
+// RegistryRetrieveRes registry retrieve response data structure
+type RegistryRetrieveRes struct {
+	URI        string   `json:"uri"`
+	SCAddr     string   `json:"scAddr"`
+	AppTypeIds []string `json:"appTypeIds,omitempty"`
+	Status     uint64   `json:"status"`
 }

@@ -16,26 +16,23 @@ limitations under the License.
 
 package main
 
+// Constants for work order
 const (
-	WORKERACTIVE         = 1
-	WORKEROFFLINE        = 2
-	WORKERDECOMMISSIONED = 3
-	WORKERCOMPROMISED    = 4
-
-	OBJECTTYPE   = "WorkerRegister"
-	PAGESIZE     = 10
-	UINT64FORMAT = "%020d"
-	BYTE32FORMAT = "%032s"
+	ORDERSUBMITTED = 0
+	ORDERCOMPLETED = 1
+	ORDERFAILED    = 2
 
 	APIVERSION = "0x0101"
 )
 
 // WorkOrder Chaincode struct
 type WorkOrder struct {
-	WorkOrderId      string `json:"workOrderId"`
-	WorkerId         string `json:"workerId"`
-	RequesterId      string `json:"requesterId"`
-	WorkOrderRequest string `json:"workOrderRequest,omitempty"`
+	WorkOrderId       string `json:"workOrderId"`
+	WorkerId          string `json:"workerId"`
+	RequesterId       string `json:"requesterId"`
+	WorkOrderStatus   uint64 `json:"workOrderStatus`
+	WorkOrderRequest  string `json:"workOrderRequest,omitempty"`
+	WorkOrderResponse string `json:"workOrderResponse,omitempty"`
 }
 
 type WorkOrderSubmittedEvent struct {
@@ -46,4 +43,21 @@ type WorkOrderSubmittedEvent struct {
 	ErrorCode        uint64 `json:"errorCode"`
 	SenderAddress    string `json:"senderAddress"`
 	Version          string `json:"version"`
+}
+
+type WorkOrderCompletedEvent struct {
+	RequesterId       string `json:"requesterId"`
+	WorkOrderId       string `json:"workOrderId"`
+	WorkOrderStatus   uint64 `json:"workOrderStatus"`
+	WorkOrderResponse string `json:"workOrderResponse"`
+	ErrorCode         uint64 `json:"errorCode"`
+	Version           string `json:"version"`
+}
+
+type WorkOrderGetRes struct {
+	WorkOrderStatus   uint64 `json:"workOrderStatus"`
+	WorkerId          string `json:"workerId"`
+	WorkOrderRequest  string `json:"workOrderRequest"`
+	WorkOrderResponse string `json:"workOrderResponse"`
+	ErrorCode         uint64 `json:"errorCode"`
 }

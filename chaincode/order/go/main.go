@@ -31,7 +31,7 @@ var logger = shim.NewLogger("WorkerOrder")
 // getWorkOrderID - This function retrieve the work order with its ID
 // params:
 //   byte32 workOrderID
-func (t *WorkOrder) getWorkByID(stub shim.ChaincodeStubInterface, workOrderID string) (*WorkOrder, error) {
+func (t *WorkOrder) getOrderByID(stub shim.ChaincodeStubInterface, workOrderID string) (*WorkOrder, error) {
 	var param WorkOrder
 	Avalbytes, err := stub.GetState(workOrderID)
 	if err != nil {
@@ -98,7 +98,7 @@ func (t *WorkOrder) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Success(nil)
 }
 
-// WorkOrderSubmit - This function submit a work order
+// workOrderSubmit - This function submit a work order
 // params:
 //   bytes32 workOrderId
 //   bytes32 workerId
@@ -117,6 +117,8 @@ func (t *WorkOrder) workOrderSubmit(stub shim.ChaincodeStubInterface, args []str
 	param.WorkerId = args[1]
 	param.RequesterId = args[2]
 	param.WorkOrderRequest = args[3]
+	param.WorkOrderStatus = ORDERSUBMITTED
+	param.WorkOrderResponse = ""
 
 	//Serialize the value
 	value, err := json.Marshal(param)
@@ -154,12 +156,112 @@ func (t *WorkOrder) workOrderSubmit(stub shim.ChaincodeStubInterface, args []str
 	return shim.Success(nil)
 }
 
+// workOrderComplete - This function submit a work order
+// params:
+//   bytes32 workOrderId
+//   string workOrderResponse
+// returns:
+func (t *WorkOrder) workOrderComplete(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("workOrderComplete")
+	if len(args) != 2 {
+		logger.Errorf("Too many parameters, expect 2, received %d", len(args))
+		return shim.Error("workOrderSubmit must include 2 arguments, workOrderID and workOrderResponse")
+	}
+
+	wo, err := t.getOrderByID(stub, args[0])
+	if err != nil {
+		logger.Errorf("Could not find the work orger by the id %s", args[0])
+		return shim.Error(err.Error())
+	}
+	logger.Infof("The work order ID: %s", wo.WorkOrderId)
+
+	wo.WorkOrderStatus = ORDERCOMPLETED
+	wo.WorkOrderResponse = args[1]
+
+	//Serialize the value
+	value, err := json.Marshal(wo)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = stub.PutState(wo.WorkOrderId, value)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	// Handling payload for the event
+	var eventData WorkOrderCompletedEvent
+	eventData.RequesterId = wo.RequesterId
+	eventData.WorkOrderId = wo.WorkOrderId
+	eventData.WorkOrderStatus = wo.WorkOrderStatus
+	eventData.WorkOrderResponse = wo.WorkOrderResponse
+	eventData.ErrorCode = 0
+	eventData.Version = APIVERSION
+
+	eventPayload, err := json.Marshal(eventData)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	err = stub.SetEvent("workOrderCompleted", eventPayload)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	logger.Info("Finished workOrderComplete")
+	return shim.Success(nil)
+}
+
+// workOrderGet - This function retrieve a work order
+// params:
+//   bytes32 workOrderId
+// returns:
+//   uint256 workOrderStatus,
+//   bytes32 workerId,
+//   string workOrderRequest,
+//   string workOrderResponse,
+//   uint256 errorCode
+func (t *WorkOrder) workOrderGet(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	logger.Info("workOrderComplete")
+	if len(args) != 1 {
+		logger.Errorf("Too many parameters, expect 1, received %d", len(args))
+		return shim.Error("workOrderSubmit must include 1 argument, workOrderID")
+	}
+
+	wo, err := t.getOrderByID(stub, args[0])
+	if err != nil {
+		logger.Errorf("Could not find the work orger by the id %s", args[0])
+		return shim.Error(err.Error())
+	}
+	logger.Infof("The work order ID: %s", wo.WorkOrderId)
+
+	// Handling payload for the event
+	var payloadData WorkOrderGetRes
+	payloadData.WorkOrderStatus = wo.WorkOrderStatus
+	payloadData.WorkerId = wo.WorkerId
+	payloadData.WorkOrderRequest = wo.WorkOrderRequest
+	payloadData.WorkOrderResponse = wo.WorkOrderResponse
+	payloadData.ErrorCode = 0
+
+	value, err := json.Marshal(payloadData)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	logger.Info("Finished workOrderGet")
+	return shim.Success(value)
+}
+
 // Invoke - this function simply satisfy the main requirement of chaincode
 func (t *WorkOrder) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	logger.Info("Invoke")
 	function, args := stub.GetFunctionAndParameters()
 	if function == "workOrderSubmit" {
 		return t.workOrderSubmit(stub, args)
+	} else if function == "workOrderComplete" {
+		return t.workOrderComplete(stub, args)
+	} else if function == "workOrderGet" {
+		return t.workOrderComplete(stub, args)
 	}
 
 	return shim.Error("Invalid invoke function name")
