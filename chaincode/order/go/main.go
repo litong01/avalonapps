@@ -1,5 +1,5 @@
 /*
-Copyright IBM Corp. 2016 All Rights Reserved.
+Copyright IBM Corp. 2020 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,36 +27,6 @@ import (
 )
 
 var logger = shim.NewLogger("WorkerOrder")
-
-const (
-	WORKERACTIVE         = 1
-	WORKEROFFLINE        = 2
-	WORKERDECOMMISSIONED = 3
-	WORKERCOMPROMISED    = 4
-
-	OBJECTTYPE   = "WorkerRegister"
-	PAGESIZE     = 10
-	UINT64FORMAT = "%020d"
-	BYTE32FORMAT = "%032s"
-)
-
-// WorkOrder Chaincode struct
-type WorkOrder struct {
-	WorkOrderId      string `json:"workOrderId"`
-	WorkerId         string `json:"workerId"`
-	RequesterId      string `json:"requesterId"`
-	WorkOrderRequest string `json:"workOrderRequest,omitempty"`
-}
-
-type WorkOrderSubmittedEvent struct {
-	WorkOrderId      string `json:"workOrderId"`
-	WorkerId         string `json:"workerId"`
-	RequesterId      string `json:"requesterId"`
-	WorkOrderRequest string `json:"workOrderRequest"`
-	ErrorCode        uint64 `json:"errorCode"`
-	SenderAddress    string `json:"senderAddress"`
-	Version          string `json:"version"`
-}
 
 // getWorkOrderID - This function retrieve the work order with its ID
 // params:
@@ -168,6 +138,7 @@ func (t *WorkOrder) workOrderSubmit(stub shim.ChaincodeStubInterface, args []str
 	eventData.WorkOrderRequest = param.WorkOrderRequest
 	eventData.ErrorCode = 0
 	eventData.SenderAddress = t.getCallerID(stub)
+	eventData.Version = APIVERSION
 
 	eventPayload, err := json.Marshal(eventData)
 	if err != nil {

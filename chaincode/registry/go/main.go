@@ -1,5 +1,5 @@
 /*
-Copyright IBM Corp. 2016 All Rights Reserved.
+Copyright IBM Corp. 2020 All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,53 +30,11 @@ import (
 
 var logger = shim.NewLogger("WorkerRegistry")
 
-const (
-	WORKERACTIVE         = 1
-	WORKEROFFLINE        = 2
-	WORKERDECOMMISSIONED = 3
-	WORKERCOMPROMISED    = 4
-
-	OBJECTTYPE   = "WorkerRegister"
-	PAGESIZE     = 10
-	UINT64FORMAT = "%020d"
-	BYTE32FORMAT = "%032s"
-)
-
-// WorkerRegister workerRegister invocation parameter
-type WorkerRegister struct {
-	WorkerID          string   `json:"workerID"`
-	WorkerType        uint64   `json:"workerType"`
-	OrganizationID    string   `json:"organizationID"`
-	ApplicationTypeId []string `json:"applicationTypeId,omitempty"`
-	Details           string   `json:"details"`
-	Status            uint64   `json:"status,omitempty"`
-}
-
-// WorkerRetrieveParam workerRetrieve response parameter
-type WorkerRetrieveResParam struct {
-	Status            uint64   `json:"status,omitempty"`
-	WorkerType        uint64   `json:"workerType"`
-	OrganizationID    string   `json:"organizationID"`
-	ApplicationTypeId []string `json:"applicationTypeId,omitempty"`
-	Details           string   `json:"details"`
-}
-
-type WorkerLookUpResParam struct {
-	TotalCount uint64   `json:"totalCount"`
-	LookupTag  string   `json:"lookupTag"`
-	IDs        []string `json:"ids,omitempty"`
-}
-
-// WorkerRegistry Chaincode struct
-// This chaincode allows application to register, lookup and retrieve workers
-type WorkerRegistry struct {
-}
-
 // getWorkerByID - This function retrieve the worker register with its ID
 // params:
 //   byte32 workerID
-func (t *WorkerRegistry) getWorkerByID(stub shim.ChaincodeStubInterface, workerID string) (*WorkerRegister, error) {
-	var param WorkerRegister
+func (t *WorkerRegistry) getWorkerByID(stub shim.ChaincodeStubInterface, workerID string) (*WorkerRegistry, error) {
+	var param WorkerRegistry
 	Avalbytes, err := stub.GetState(workerID)
 	if err != nil {
 		return nil, err
@@ -101,7 +59,7 @@ func (t *WorkerRegistry) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	return shim.Success(nil)
 }
 
-// WorkerRegister - This function registers a Worker
+// workerRegister - This function registers a Worker
 // params:
 //   byte32 workerID
 //   uint256 workerType
@@ -116,7 +74,7 @@ func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args [
 		return shim.Error("workerRegister must include 5 arguments, workerID, workerType, organizationID, applicationTypeId, and details")
 	}
 
-	var param WorkerRegister
+	var param WorkerRegistry
 	param.WorkerID = args[0]
 	arg1, err := strconv.ParseUint(args[1], 10, 64)
 	if err != nil {
@@ -173,7 +131,7 @@ func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args [
 		return shim.Error(err.Error())
 	}
 
-	logger.Info("Finished WorkerRegister")
+	logger.Info("Finished workerRegister")
 	return shim.Success(nil)
 }
 
