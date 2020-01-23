@@ -261,7 +261,7 @@ func (t *WorkOrder) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	} else if function == "workOrderComplete" {
 		return t.workOrderComplete(stub, args)
 	} else if function == "workOrderGet" {
-		return t.workOrderComplete(stub, args)
+		return t.workOrderGet(stub, args)
 	}
 
 	return shim.Error("Invalid invoke function name")
