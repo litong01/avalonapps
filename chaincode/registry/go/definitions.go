@@ -22,8 +22,10 @@ const (
 	OFFLINE        = 2
 	DECOMMISSIONED = 3
 
-	OBJECTTYPE = "Registry"
-	PAGESIZE   = 10
+	OBJECTTYPE   = "Registry"
+	PAGESIZE     = 10
+	UINT64FORMAT = "%020d"
+	BYTE32FORMAT = "%-32v"
 )
 
 // Registry data structure

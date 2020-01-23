@@ -135,10 +135,10 @@ func (t *WorkerRegistry) workerRegister(stub shim.ChaincodeStubInterface, args [
 	return shim.Success(nil)
 }
 
-// WorkerSetStatus - This function set the status of a Worker
+// workerUpdate - This function set the detail of a Worker
 // params:
 //   byte32 workerID
-//   uint256 status
+//   string detail
 // returns:
 func (t *WorkerRegistry) workerUpdate(stub shim.ChaincodeStubInterface, args []string) pb.Response {
 	logger.Info("workerSetStatus")
@@ -251,20 +251,9 @@ func (t *WorkerRegistry) workerLookUpNext(stub shim.ChaincodeStubInterface, args
 		return shim.Error("workerLookUpNext must include 4 argements, workerType, organizationID, applicationTypeId and lookupTag")
 	}
 
-	attrs := []string{}
-	arg0, err := strconv.ParseUint(args[0], 10, 64)
+	attrs, err := processAttributes(args[0:3], []string{UINT64FORMAT, BYTE32FORMAT, BYTE32FORMAT})
 	if err != nil {
-		logger.Errorf("Worker Type must be an integer")
-		return shim.Error("Worker Type must be an integer")
-	}
-	if arg0 != 0 {
-		attrs = append(attrs, fmt.Sprintf(UINT64FORMAT, arg0))
-		if args[1] != "0" {
-			attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, args[1]))
-			if args[2] != "0" {
-				attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, args[2]))
-			}
-		}
+		return shim.Error(err.Error())
 	}
 	logger.Infof("The lookup key: %v", attrs)
 
@@ -383,6 +372,34 @@ func (t *WorkerRegistry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	}
 
 	return shim.Error("Invalid invoke function name")
+}
+
+// processAttributes - This function formalize the input attributes. It
+// will transform the variable length of a parameter value into a fixed
+// length string value
+// params:
+//   []string arg1, the value of attributes
+//   []string arg2, the type of the values to be formatted to. For example, if
+//            this value is UINT64FORMAT, then the value will be left padded 0.
+//            if this value is BYTE32FORMAT, then the value will be right padded
+//            spaces
+// returns:
+//   []string the fixed length
+func processAttributes(arg1 []string, arg2 []string) ([]string, error) {
+	var attrs []string
+	for i, argType := range arg2 {
+		switch argType {
+		case UINT64FORMAT:
+			arg, err := strconv.ParseUint(arg1[i], 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			attrs = append(attrs, fmt.Sprintf(UINT64FORMAT, arg))
+		case BYTE32FORMAT:
+			attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, arg1[i]))
+		}
+	}
+	return attrs, nil
 }
 
 func main() {

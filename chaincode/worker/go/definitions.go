@@ -16,6 +16,7 @@ limitations under the License.
 
 package main
 
+// Worker related constants
 const (
 	WORKERACTIVE         = 1
 	WORKEROFFLINE        = 2
@@ -25,10 +26,10 @@ const (
 	OBJECTTYPE   = "WorkerRegister"
 	PAGESIZE     = 10
 	UINT64FORMAT = "%020d"
-	BYTE32FORMAT = "%032s"
+	BYTE32FORMAT = "%-32v"
 )
 
-// WorkerRegister workerRegister invocation parameter
+// WorkerRegistry workerRegister object saved
 type WorkerRegistry struct {
 	WorkerID          string   `json:"workerID"`
 	WorkerType        uint64   `json:"workerType"`
@@ -38,7 +39,7 @@ type WorkerRegistry struct {
 	Status            uint64   `json:"status,omitempty"`
 }
 
-// WorkerRetrieveParam workerRetrieve response parameter
+// WorkerRetrieveResParam workerRetrieve response json object
 type WorkerRetrieveResParam struct {
 	Status            uint64   `json:"status,omitempty"`
 	WorkerType        uint64   `json:"workerType"`
@@ -47,6 +48,7 @@ type WorkerRetrieveResParam struct {
 	Details           string   `json:"details"`
 }
 
+//WorkerLookUpResParam workLookup response json object
 type WorkerLookUpResParam struct {
 	TotalCount uint64   `json:"totalCount"`
 	LookupTag  string   `json:"lookupTag"`

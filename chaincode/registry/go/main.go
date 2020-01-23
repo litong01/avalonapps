@@ -20,6 +20,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -93,7 +94,8 @@ func (t *Registry) registryAdd(stub shim.ChaincodeStubInterface, args []string) 
 
 	compValue := []byte(r.OrgID)
 	for _, appTypeID := range r.AppTypeIds {
-		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, []string{appTypeID, r.OrgID})
+		attrs, _ := processAttributes([]string{appTypeID, r.OrgID}, []string{BYTE32FORMAT, BYTE32FORMAT})
+		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, attrs)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
@@ -148,7 +150,8 @@ func (t *Registry) registryUpdate(stub shim.ChaincodeStubInterface, args []strin
 
 	// Remove all the app IDs
 	for _, appTypeID := range oldAppTypeIds {
-		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, []string{appTypeID, r.OrgID})
+		attrs, _ := processAttributes([]string{appTypeID, r.OrgID}, []string{BYTE32FORMAT, BYTE32FORMAT})
+		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, attrs)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
@@ -160,7 +163,8 @@ func (t *Registry) registryUpdate(stub shim.ChaincodeStubInterface, args []strin
 
 	compValue := []byte(r.OrgID)
 	for _, appTypeID := range r.AppTypeIds {
-		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, []string{appTypeID, r.OrgID})
+		attrs, _ := processAttributes([]string{appTypeID, r.OrgID}, []string{BYTE32FORMAT, BYTE32FORMAT})
+		compKey, err := stub.CreateCompositeKey(OBJECTTYPE, attrs)
 		if err != nil {
 			return shim.Error(err.Error())
 		}
@@ -252,7 +256,8 @@ func (t *Registry) registryLookUpNext(stub shim.ChaincodeStubInterface, args []s
 		return shim.Error("registryLookUpNext must include 2 argements, appTypeId and lookUpTag")
 	}
 
-	attrs := []string{args[0]}
+	attrs, _ := processAttributes(args[0:1], []string{BYTE32FORMAT})
+
 	logger.Infof("The lookup key: %v", attrs)
 
 	iter, metadata, err := stub.GetStateByPartialCompositeKeyWithPagination(OBJECTTYPE, attrs,
@@ -364,6 +369,34 @@ func (t *Registry) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	}
 
 	return shim.Error("Invalid invoke function name")
+}
+
+// processAttributes - This function formalize the input attributes. It
+// will transform the variable length of a parameter value into a fixed
+// length string value
+// params:
+//   []string arg1, the value of attributes
+//   []string arg2, the type of the values to be formatted to. For example, if
+//            this value is UINT64FORMAT, then the value will be left padded 0.
+//            if this value is BYTE32FORMAT, then the value will be right padded
+//            spaces
+// returns:
+//   []string the fixed length
+func processAttributes(arg1 []string, arg2 []string) ([]string, error) {
+	var attrs []string
+	for i, argType := range arg2 {
+		switch argType {
+		case UINT64FORMAT:
+			arg, err := strconv.ParseUint(arg1[i], 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			attrs = append(attrs, fmt.Sprintf(UINT64FORMAT, arg))
+		case BYTE32FORMAT:
+			attrs = append(attrs, fmt.Sprintf(BYTE32FORMAT, arg1[i]))
+		}
+	}
+	return attrs, nil
 }
 
 func main() {
