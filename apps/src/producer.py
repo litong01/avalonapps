@@ -9,7 +9,7 @@ import time
 import uuid
 
 from avalon import base
-from avalon import txcommiter
+from avalon import tx_commiter
 
 logger = logging.getLogger(__name__)
 

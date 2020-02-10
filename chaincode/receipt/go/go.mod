@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-module order
+module receipt
 
 go 1.12
 

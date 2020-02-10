@@ -7,7 +7,7 @@ import sys
 import random
 
 from avalon import base
-from avalon import eventlistener
+from avalon import event_listener
 
 logger = logging.getLogger(__name__)
 

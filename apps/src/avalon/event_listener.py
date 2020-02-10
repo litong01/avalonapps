@@ -1,4 +1,18 @@
 #!/usr/bin/python
+# Copyright IBM Corp. 2020 All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import asyncio
 import logging
 import grpc
@@ -8,15 +22,22 @@ from avalon import base
 
 logger = logging.getLogger(__name__)
 
+
 class EventListener(base.ClientBase):
+    """
+    Utility class to listen to block chain events
+    """
+
     def __init__(self, profile, channel_name, org_name, peer_name, user_name):
         super().__init__(profile, channel_name, org_name, peer_name, user_name)
         endpoint = self.client.get_net_info('peers', self.peer_name, 'url')
-        tlscert = self.client.get_net_info('peers', self.peer_name, 'tlsCACerts', 'path')
+        tlscert = self.client.get_net_info(
+            'peers', self.peer_name, 'tlsCACerts', 'path')
 
         peer = create_peer(endpoint=endpoint, tls_cacerts=tlscert)
 
-        self._channel_event_hub = self.channel.newChannelEventHub(peer, self.user)
+        self._channel_event_hub = self.channel.newChannelEventHub(
+            peer, self.user)
         self._event_regid = ''
         self._last_block = 0
         self._config = 'blockmark'
@@ -63,31 +84,39 @@ class EventListener(base.ClientBase):
         except IOError:
             pass
 
-    def saveConfig(self):
+    def _save_config(self):
         with open(self._config, 'w') as file:
             file.write(str(self._last_block))
             logger.info('Saved blockmark: %s', self._last_block)
 
-    async def startEventHandling(self):
-        def eventHandler(event, block_num, txnid, status):
-            logger.info('Event: {0}\nblock_num: {1}\ntxid: {2}\nstatus: {3}'.format(
-                event, block_num, txnid, status))
+    async def start_event_handling(self):
+        """
+        Function to start event listener.
+        """
+        def event_handler(event, block_num, txnid, status):
+            logger.info(
+                'Event: {0}\nblock_num: {1}\ntxid: {2}\nstatus: {3}'.format(
+                    event, block_num, txnid, status))
             try:
                 self._handler(event, block_num, txnid, status)
                 self._last_block = block_num
             except Exception as ex:
                 logger.error('Handler error: {0}'.format(ex))
 
-        self._event_regid = self._channel_event_hub.registerChaincodeEvent(self._chaincode,
-            self._event, start=self._last_block, onEvent=eventHandler)
+        self._event_regid = self._channel_event_hub.registerChaincodeEvent(
+            self._chaincode, self._event, start=self._last_block,
+            onEvent=eventHandler)
         logger.info('Event handler registered!')
         try:
             await self._channel_event_hub.connect(False)
         except grpc.RpcError as ex:
             # This is expected when event hub gets disconnected
-            self.saveConfig()
+            self._save_config()
 
-    async def stopEventHandling(self, seconds):
+    async def stop_event_handling(self, seconds):
+        """
+        Function to stop event listener.
+        """
         await asyncio.sleep(seconds)
         self._channel_event_hub.unregisterChaincodeEvent(self._event_regid)
         self._channel_event_hub.disconnect()
