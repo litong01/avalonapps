@@ -18,7 +18,7 @@ def eventHandler(event, block_num, txnid, status):
 
 def main():
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "ERROR"))
-    logging.getLogger('avalon').setLevel(logging.INFO)
+    logging.getLogger('avalon').setLevel(logging.DEBUG)
     if len(sys.argv) != 2:
         print("Usage:")
         print("          " + sys.argv[0] + " <no_of_seconds_to_wait>")
@@ -33,14 +33,14 @@ def main():
     print(orgname)
     print(peername)    
 
-    ec = eventlistener.EventListener('network.json', 'mychannel', orgname, peername, 'Admin')
+    ec = event_listener.EventListener('network.json', 'mychannel', orgname, peername, 'Admin')
     ec.config = 'blockmark'
     ec.event = 'workerRegistered'
-    ec.chaincode = 'registry'
+    ec.chaincode = 'worker'
     ec.handler = eventHandler
 
     loop = asyncio.get_event_loop()
-    tasks = [ec.startEventHandling(), ec.stopEventHandling(int(sys.argv[1]))]
+    tasks = [ec.start_event_handling(), ec.stop_event_handling(int(sys.argv[1]))]
     loop.run_until_complete(asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED))
     loop.close()
 

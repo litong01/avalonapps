@@ -9,7 +9,7 @@ import time
 import uuid
 
 from avalon import base
-from avalon import tx_commiter
+from avalon import tx_committer
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def main():
     print("Peer used: ", peername)    
 
     # Get a tx commiter
-    pd = txcommiter.TxCommitter('network.json', 'mychannel', orgname, peername, 'Admin')
+    pd = tx_committer.TxCommitter('network.json', 'mychannel', orgname, peername, 'Admin')
   
     # Get the call attributes according to the method definitions.
     thecall = chaincode[callname]
@@ -96,14 +96,14 @@ def main():
     else:
         # Use user provided parameters
         params = sys.argv[3:]
-    resp = pd.ccInvoke(params, chaincodename, callname, '', queryonly=thecall['isQuery'])
+    resp = pd.cc_invoke(params, chaincodename, callname, '', queryonly=thecall['isQuery'])
     showResponse(resp)
 
     # For lookups methods, will also do a lookUpNext using the lookupTag returned.
     if callname.endswith('LookUp'):
         payload = json.loads(resp[0].response.payload)
         params.append(payload['lookupTag'])
-        resp = pd.ccInvoke(params, chaincodename, callname+'Next', '', queryonly=True)
+        resp = pd.cc_invoke(params, chaincodename, callname+'Next', '', queryonly=True)
         showResponse(resp)
 
 if __name__ == "__main__":
