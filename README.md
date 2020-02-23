@@ -7,7 +7,6 @@ This repo contains example applications to demotrate fabric avalon in action
 ### Getting the app and minifabric so that you can set up environment
 
 ```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
-```
 
 [Minifabric](https://github.com/litong01/minifabric) is a tool to deploy fabric network on a single node
 
