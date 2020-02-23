@@ -4,6 +4,10 @@
 
 This repo contains example applications to demotrate fabric avalon in action
 
+### Prerequsites
+
+To run the test applications, [docker](https://www.docker.com/) 18.03 or newer is required.
+
 ### Getting minifabric so that you can set up environment
 
 ```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
