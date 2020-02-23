@@ -4,21 +4,21 @@
 
 This repo contains example applications to demotrate fabric avalon in action
 
-### Prerequsites
+0. ### Prerequsites
 
 To run the test applications, [docker](https://www.docker.com/) 18.03 or newer and [git](https://git-scm.com/) are required.
 
-### Getting minifabric so that you can set up environment
+1. ### Getting minifabric so that you can set up environment
 
 ```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
 
 [Minifabric](https://github.com/litong01/minifabric) is a tool to deploy fabric network in docker environment
 
-### Clone this repository
+2. ### Clone this repository
 
 ```git clone https://github.com/litong01/avalonapps.git```
 
-### Go to the avalonapps directory and stand up a fabric network
+3. ### Change to the avalonapps directory and stand up a fabric network
 
 ```cd avalonapps && minifab up```
 
@@ -32,7 +32,7 @@ To shutdown the fabric network and restart the whole process, do the following:
 To remove everything including the fabric network, do the following:
 ```minifab cleanup```
 
-### Retrieve avalon chaincode and install worker chaincode onto the fabric network
+4. ### Retrieve avalon chaincode and install worker chaincode onto the fabric network
 ```
 ./getandinstall.sh
 minifab install,approve,commit -n worker
@@ -41,7 +41,7 @@ minifab install,approve,commit -n worker
 You can install, approve and commit other Avalon chaincode by using different chaincode
 name with the same command.
 
-### Run avalon apps
+5. ### Run avalon apps
 
 Two applications were developed to test the go chaincode and connector python
 code. The program named consumer.py in apps directory is the program to
@@ -66,7 +66,7 @@ will wait for 500 seconds, then quit. If you wish to listen for a shorter or lon
 period, you can change the value to your desired value. When there are workerRegistered
 events produced on Fabric network, this app will show the events.
 
-### To produce some events
+#### To produce some events
 
 ```
 docker exec -it avalon bash
