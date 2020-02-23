@@ -39,7 +39,7 @@ minifab install,approve,commit -n worker
 ```
 
 You can install, approve and commit other Avalon chaincode by using different chaincode
-name using same command.
+name with the same command.
 
 ### Run avalon apps
 
