@@ -48,7 +48,7 @@ to submit transactions and query against fabric blockchain network.
 ```
 ./run.sh
 ```
-This command starts a container which uses a container image includes Hyperledger [fabric
+This command starts a container which uses a [container image](https://hub.docker.com/repository/docker/hfrd/tongpy) includes Hyperledger [fabric
 python sdk](https://github.com/hyperledger/fabric-sdk-py) and [Fabric Avalon python connector](https://github.com/hyperledger/avalon/tree/master/sdk/avalon_sdk/fabric).
 
 #### To listen to event workerRegistered, execute the following command
