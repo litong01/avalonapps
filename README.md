@@ -1,53 +1,53 @@
 [//]: # (SPDX-License-Identifier: CC-BY-4.0)
 
-## Hyperledger Fabric Avalon
+## Hyperledger Fabric Avalon Test Application
 
-Steps to see fabric avalon in action
+This repo contains example applications to demotrate fabric avalon in action
 
-### Getting minifabric so that you can stand up a fabric network
+### Getting the app and minifabric so that you can set up environment
 
 ```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
+```
 
 [Minifabric](https://github.com/litong01/minifabric) is a tool to deploy fabric network on a single node
 
 ### Clone this repository
 
-```https://github.com/litong01/avalon.git```
+```https://github.com/litong01/avalonapps.git```
 
-### Go to the avalon directory and stand up a fabric network
+### Go to the avalonapps directory and stand up a fabric network
 
-```cd avalon && minifab up -i 1.4.1```
+```cd avalonapps && minifab up```
 
 This process will take awhile if this is the first time you are setting up
-a fabric network. If for some reason, the network is no longer running, you
-can simply do the following command to bring things backup
+a fabric network. 
 
-```minifab down && minifab up -i 1.4.1```
+To shutdown the fabric network and restart the whole process, do the following:
 
-### Install avalon chaincode onto the fabric network
+```minifab down && minifab up```
+
+### Retrieve avalon chaincode and install worker chaincode onto the fabric network
 ```
-sudo cp -r chaincode/* vars/chaincode
-minifab install -n <chaincodename> -v <chaincodeversion>
-minifab instantiate
+./getandinstall.sh
+minifab install,approve,commit -n worker
 ```
 
-where &lt;chaincodename&gt; should be a name of avalon chaincodes such as
-registry, etc., &lt;chaincodeversion&gt; should be the version of chaincode
-such as 1.0. If you have updates to the chaincode, you should do the same
-steps above but use a new version number.
+You can install, approve and commit other Avalon chaincode by using different chaincode
+name using same command.
 
 ### Run avalon apps
 
 Two applications were developed to test the go chaincode and connector python
-code. The program named consumer.py in apps/src directory is the program to
-listen to fabric events. The program named producer.py in apps/src was developed
+code. The program named consumer.py in apps directory is the program to
+listen to fabric events. The program named producer.py in apps was developed
 to submit transactions and query against fabric blockchain network.
 
 #### To start a container to run these programs:
-
 ```
 ./run.sh
 ```
+This command starts a container which uses a container image includes Hyperledger [fabric
+python sdk](https://github.com/hyperledger/fabric-sdk-py)
 
 #### To listen to event workerRegistered, execute the following command
 ```
@@ -55,17 +55,19 @@ docker exec -it avalon bash
 cd /pysrc
 python3 consumer.py 500
 ```
+The above command runs the Avalon event listener and wait for workerRegister event. It
+will wait for 500 seconds, then quit. If you wish to listen for a shorter or longer
+period, you can change the value to your desired value.
 
-### To produce some events and do query
+### To produce some events
 
 ```
 docker exec -it avalon bash
 cd /pysrc
-python3 producer.py <parameters>
+python3 producer.py worker workerRegister
 ```
 
-where &lt;parameters&gt; should be something depends on what you exactly
-want to do. Simply do `python3 producer.py` to see the usages
+This command will register a new worker and produce one workerRegistered event.
 
 ## License <a name="license"></a>
 
