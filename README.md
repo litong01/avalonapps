@@ -59,7 +59,7 @@ python sdk](https://github.com/hyperledger/fabric-sdk-py) and [Fabric Avalon pyt
 ```
 docker exec -it avalon bash
 cd /pysrc
-python3 consumer.py 500
+python consumer.py 500
 ```
 The above command runs the Avalon event listener and wait for workerRegister event. It
 will wait for 500 seconds, then quit. If you wish to listen for a shorter or longer
@@ -71,7 +71,7 @@ events produced on Fabric network, this app will show the events.
 ```
 docker exec -it avalon bash
 cd /pysrc
-python3 producer.py worker workerRegister
+python producer.py worker workerRegister
 ```
 
 This command will register a new worker and produce one workerRegistered event.
