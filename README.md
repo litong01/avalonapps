@@ -4,11 +4,11 @@
 
 This repo contains example applications to demotrate fabric avalon in action
 
-### Getting the app and minifabric so that you can set up environment
+### Getting minifabric so that you can set up environment
 
 ```curl -o ~/.local/bin/minifab -L https://tinyurl.com/twrt8zv && chmod +x ~/.local/bin/minifab```
 
-[Minifabric](https://github.com/litong01/minifabric) is a tool to deploy fabric network on a single node
+[Minifabric](https://github.com/litong01/minifabric) is a tool to deploy fabric network in docker environment
 
 ### Clone this repository
 
@@ -24,6 +24,9 @@ a fabric network.
 To shutdown the fabric network and restart the whole process, do the following:
 
 ```minifab down && minifab up```
+
+To remove everything including the fabric network, do the following:
+```minifab cleanup```
 
 ### Retrieve avalon chaincode and install worker chaincode onto the fabric network
 ```
@@ -41,12 +44,12 @@ code. The program named consumer.py in apps directory is the program to
 listen to fabric events. The program named producer.py in apps was developed
 to submit transactions and query against fabric blockchain network.
 
-#### To start a container to run these programs:
+#### To start the container to run these programs:
 ```
 ./run.sh
 ```
 This command starts a container which uses a container image includes Hyperledger [fabric
-python sdk](https://github.com/hyperledger/fabric-sdk-py)
+python sdk](https://github.com/hyperledger/fabric-sdk-py) and [Fabric Avalon python connector](https://github.com/hyperledger/avalon/tree/master/sdk/avalon_sdk/fabric).
 
 #### To listen to event workerRegistered, execute the following command
 ```
