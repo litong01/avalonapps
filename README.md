@@ -63,7 +63,8 @@ python3 consumer.py 500
 ```
 The above command runs the Avalon event listener and wait for workerRegister event. It
 will wait for 500 seconds, then quit. If you wish to listen for a shorter or longer
-period, you can change the value to your desired value.
+period, you can change the value to your desired value. When there are workerRegistered
+events produced on Fabric network, this app will show the events.
 
 ### To produce some events
 
