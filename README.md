@@ -6,7 +6,7 @@ This repo contains example applications to demotrate fabric avalon in action
 
 ### Prerequsites
 
-To run the test applications, [docker](https://www.docker.com/) 18.03 or newer is required.
+To run the test applications, [docker](https://www.docker.com/) 18.03 or newer and [git](https://git-scm.com/) are required.
 
 ### Getting minifabric so that you can set up environment
 
@@ -16,7 +16,7 @@ To run the test applications, [docker](https://www.docker.com/) 18.03 or newer i
 
 ### Clone this repository
 
-```https://github.com/litong01/avalonapps.git```
+```git clone https://github.com/litong01/avalonapps.git```
 
 ### Go to the avalonapps directory and stand up a fabric network
 
